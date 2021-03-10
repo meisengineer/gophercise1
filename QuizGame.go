@@ -7,12 +7,13 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 func check(e error) {
@@ -22,12 +23,32 @@ func check(e error) {
 }
 
 func main() {
+	// Define the command line flags the program will accept
+	var filename = flag.String("f", "problems.csv", "file in the data/ directory to load")
+	var timeLimitFlag = flag.String("t", "30", "time limit for the quiz, in seconds")
+	var random = flag.Bool("r", false, "randomize the questions")
+	// TODO flags still need something golang.org/pkg/flag
+
+	timeLimit, _ := time.ParseDuration(*timeLimitFlag)
+
+	// Define input variables
+	var (
+		answer string
+	)
+
+	timer := time.NewTimer(time.Duration(timeLimit.Seconds()))
+
+	// Read in the file. All quiz sources should be csv and in the data directory
 	pwd, err1 := os.Getwd()
 	check(err1)
-	data, err := ioutil.ReadFile(pwd + "/data/sample")
+	data, err := ioutil.ReadFile(pwd + "/data/" + filename)
 	check(err)
-
 	reader := csv.NewReader(strings.NewReader(string(data)))
+
+	// Prompt the user to start
+	fmt.Println("Welcome to the Kwiz Game!")
+	fmt.Println("Press Enter to begin...")
+	fmt.Scanln()
 
 	for {
 		record, err := reader.Read()
@@ -35,7 +56,7 @@ func main() {
 			break
 		}
 		if err != nil {
-			log.Fatal(err)
+			check(err)
 		}
 		fmt.Printf("%T\n", record)
 
