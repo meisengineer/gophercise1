@@ -24,15 +24,16 @@ func check(e error) {
 
 func main() {
 	// Define the command line flags the program will accept. These will all be pointers.
-	var filename = flag.String("f", "problems.csv", "file in the data/ directory to load")
+	var filename = flag.String("f", "sample.csv", "file in the data/ directory to load")
 	var timeLimitFlag = flag.String("t", "30", "time limit for the quiz, in seconds")
 	//var random = flag.Bool("r", false, "randomize the questions")
 	flag.Parse()
 
 	// Define input variables
 	var (
-		//answer string
-		record []string
+		record  []string
+		qakey   map[string]string
+		correct = 0
 	)
 
 	timeLimit, _ := time.ParseDuration(*timeLimitFlag)
@@ -44,6 +45,7 @@ func main() {
 	data, err := ioutil.ReadFile(pwd + "/data/" + *filename)
 	check(err)
 	reader := csv.NewReader(strings.NewReader(string(data)))
+	qakey = make(map[string]string)
 	for {
 		record, err = reader.Read()
 		if err == io.EOF {
@@ -52,13 +54,26 @@ func main() {
 		if err != nil {
 			check(err)
 		}
+		qakey[record[0]] = record[1]
 	}
 
 	// Prompt the user to start
 	fmt.Println("Welcome to the Kwiz Game!")
 	fmt.Println("Press Enter to begin...")
 	fmt.Scanln()
-	<-timer.C
-	fmt.Println(record[0])
-
+	timerc := make(chan bool)
+	go func() {
+		<-timer.C
+		time.Sleep(30)
+		return timer.Stop()
+	}()
+	for question, answer := range qakey {
+		var temp string
+		fmt.Println(question)
+		fmt.Scanln(&temp)
+		if temp == answer {
+			correct++
+		}
+	}
+	fmt.Println("Answers Correct: ", correct, " / ", len(qakey))
 }
